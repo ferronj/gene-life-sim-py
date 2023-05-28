@@ -1,6 +1,6 @@
 import random
 
-from life_sim_py.constants.config_sim import (
+from life_sim_py.config.config_sim import (
     GENE_LENGTH,
     WEIGHT_BIT_SIZE
 )
@@ -129,3 +129,10 @@ class Genome():
                     del nodes[idx]
 
         return nodes
+
+    def reprJSON(self):
+        json_dict = {
+            'genome': self.genome
+        }
+        return json_dict
+

@@ -1,9 +1,5 @@
-import numpy as np
-
-from life_sim_py.cell.cell import Cell
-
 SENSORS = [
-    'POSITION',
+    #'POSITION',
     'POSITION_VECTOR',
     'MASS',
     'POTENTIAL',
@@ -50,14 +46,3 @@ ACTIONS = [
     'PHOTO_TO_POTENTIAL',
     'POTENTIAL_TO_PHOTO'
 ]
-
-
-def get_sensor(input_id: str, cell: Cell) -> tuple[int, float]:
-    
-
-    
-    return input_index, sensor_input
-
-
-def get_action(output_id: str, cell: Cell) -> float:
-    pass
