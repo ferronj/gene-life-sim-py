@@ -1,18 +1,19 @@
 SENSORS = [
-    #'POSITION',
+    'POSITION_X',
+    'POSITION_Y',
     'POSITION_VECTOR',
     'MASS',
     'POTENTIAL',
     'ENTROPY',
-    'GENE',
-    'GENOME_LENGTH',
+    #  'GENE',
+    #  'GENOME_LENGTH',
     'DETECT_ENERGY',
-    'DETECT_BLOCK',
-    'DETECT_SIGNAL',
+    #  'DETECT_BLOCK',
+    #  'DETECT_SIGNAL',
     'DETECT_WASTE',
-    'DETECT_GENE',
-    'DETECT_CELL',
-    'DETECT_PHOTO'
+    #  'DETECT_GENE',
+    #  'DETECT_CELLS',
+    #  'DETECT_PHOTO'
 ]
 
 ACTIONS = [
@@ -21,28 +22,28 @@ ACTIONS = [
     'GROW',  # POTENTIAL_TO_MASS
     'REPRODUCE',  # BIT-FLIP MUTATION
     'DIE',
-    'ATTACK',
-    'ADD_GENE',
-    'CUT_GENE',
+    #  'ATTACK',
+    #  'ADD_GENE',
+    #  'CUT_GENE',
     # Transports will affect the resource balance
     'TRANSPORT_IN_ENERGY',
-    'TRANSPORT_IN_BLOCK',
-    'TRANSPORT_IN_SIGNAL',
+    #  'TRANSPORT_IN_BLOCK',
+    #  'TRANSPORT_IN_SIGNAL',
     'TRANSPORT_IN_WASTE',
-    'TRANSPORT_IN_GENE',
+    #  'TRANSPORT_IN_GENE',
     'TRANSPORT_OUT_ENERGY',
-    'TRANSPORT_OUT_BLOCK',
-    'TRANSPORT_OUT_SIGNAL',
+    #  'TRANSPORT_OUT_BLOCK',
+    #  'TRANSPORT_OUT_SIGNAL',
     'TRANSPORT_OUT_WASTE',
-    'TRANSPORT_OUT_GENE',
+    #  'TRANSPORT_OUT_GENE',
     # Not sure if this makes sense yet...
-    # Trying to solve the cell resource problem
+    # Trying to solve the cell resources
     'MASS_TO_POTENTIAL',
     'MASS_TO_ENTROPY',
     'POTENTIAL_TO_MASS',
     'POTENTIAL_TO_ENTROPY',
     'ENTROPY_TO_MASS',
     'ENTROPY_TO_POTENTIAL',
-    'PHOTO_TO_POTENTIAL',
-    'POTENTIAL_TO_PHOTO'
+    #  'PHOTO_TO_POTENTIAL',
+    #  'POTENTIAL_TO_PHOTO'
 ]

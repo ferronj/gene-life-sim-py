@@ -1,7 +1,8 @@
 import numpy as np
 import random
 import pygame
-from datetime import date
+
+from scipy.spatial import KDTree
 
 from life_sim_py.config.config_sim import (
     CHEM_DRAW_RADIUS
@@ -17,10 +18,30 @@ from life_sim_py.cell.cell import (
     get_sensor_value,
     apply_action_output
 )
-from life_sim_py.population.population import Population
 
 
-def init_environment_objects(
+#  KD Tree functions
+
+def create_tree(
+        object_list: list[tuple]
+) -> KDTree:
+
+    object_tree = KDTree(object_list)
+
+    return object_tree
+
+
+def create_cell_tree(population: list[Cell], property: str) -> KDTree:
+    
+    cell_list_by_property = [cell.state[property] for cell in population]
+    cell_tree = KDTree(cell_list_by_property)
+
+    return cell_tree
+
+
+#  -------------- simulation initialize functions --------------
+
+def init_environment_object_list(
     count: int,
     screen_dimensions: tuple
 ) -> list[np.array]:
@@ -35,17 +56,14 @@ def init_environment_objects(
 
 
 def init_population(
-    size: int,
+    pop_size: int,
     screen_dimensions: tuple,
     generation: int = 0  # generation will feed to a population
 ) -> list[Cell]:
 
-    date_id = date.today()
-    pop_id = f'{size}_{date_id}_{generation}'
+    population = []
 
-    population = Population(id=pop_id, size=size, generation=generation)
-
-    for i in range(population.size):
+    for i in range(pop_size):
         x = random.randint(0, screen_dimensions[0])
         y = random.randint(0, screen_dimensions[1])
 
@@ -58,12 +76,24 @@ def init_population(
             position_vector=np.array([x_dir, y_dir])
         )
 
-        population.cells_list.append(cell)
+        population.append(cell)
 
     return population
 
 
-def simulation_interactions(environment: dict) -> dict:
+def init_environment():
+    #  take this functionality out of run-simulation
+    pass
+
+
+def update_environment():
+    #  take this functionality out of run-simulation
+    pass
+
+
+#  -------------- Simulation functions --------------
+
+def environment_interactions(environment: dict) -> dict:
 
     for cell in environment['cells']['list']:
         # initialize the input array to the cell's network
@@ -73,7 +103,6 @@ def simulation_interactions(environment: dict) -> dict:
         for node in cell.network.nodes:
             if node['input_type'] == 'STATE':
                 input_index = SENSORS.index(node['input_id'])
-                
                 sensor_input[input_index] += get_sensor_value(
                     input_id=node['input_id'],
                     cell_id=cell.id,
@@ -95,6 +124,21 @@ def simulation_interactions(environment: dict) -> dict:
                     )
 
     return environment
+
+
+def cell_entropy():
+    pass
+
+
+def cell_death():
+    pass
+
+
+def cell_reproduce():
+    pass
+
+
+#  -------------- Drawing functions --------------
 
 
 def draw_chems(

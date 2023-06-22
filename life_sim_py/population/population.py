@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import json
 
+from scipy.spatial import KDTree
+
 from life_sim_py.cell.cell import Cell
 from life_sim_py.utils.util_classes import ComplexEncoder
 
@@ -30,6 +32,9 @@ class Population():
         pass
 
     def _load_population(self) -> None:
+        pass
+
+    def _create_tree(self, property: str) -> KDTree:
         pass
 
     def reprJSON(self):

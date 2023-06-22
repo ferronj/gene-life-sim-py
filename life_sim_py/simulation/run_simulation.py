@@ -1,12 +1,11 @@
 import pygame
-import random
-import json
 import pprint
 
-from life_sim_py.utils.util_classes import ComplexEncoder
+from datetime import date
 
 import life_sim_py.simulation.colors as colors
 import life_sim_py.simulation.simulation_functions as sf
+import life_sim_py.utils.util_functions as util
 
 
 def run_simulation(args):
@@ -14,8 +13,8 @@ def run_simulation(args):
     pygame.init()
 
     # Set the window size
-    screen_size = (700, 500)
-    screen = pygame.display.set_mode(screen_size)
+    screen_dimensions = (700, 500)
+    screen = pygame.display.set_mode(screen_dimensions)
 
     # Set the title of the window
     pygame.display.set_caption("Life Sim Py v0.1")
@@ -24,23 +23,25 @@ def run_simulation(args):
     screen.fill(colors.black)
 
     # create environment objects
-    energy_init = sf.init_environment_objects(
+    energy_list = sf.init_environment_object_list(
         count=1000,
-        screen_dimensions=screen_size
+        screen_dimensions=screen_dimensions
         )
     
-    block_init = sf.init_environment_objects(
+    block_list = sf.init_environment_object_list(
         count=1000,
-        screen_dimensions=screen_size
+        screen_dimensions=screen_dimensions
         )
 
     # Create initial population - this might get more complex as we add generations...
     # TODO: consider moving this to a separate function, population_functions?
+    date_id = date.today()
     generation = args.generation
+    pop_size = args.population_size
 
     population = sf.init_population(
-        size=args.population_size,
-        screen_dimensions=screen_size,
+        pop_size=pop_size,
+        screen_dimensions=screen_dimensions,
         generation=generation
         )
 
@@ -49,32 +50,42 @@ def run_simulation(args):
         pp = pprint.PrettyPrinter(indent=4, sort_dicts=False)
         pp.pprint(population.reprJSON())
 
-    # create environment dictionary
+    #  create environment dictionary
     environment = {
-        'size': screen_size,
+        'id': f'{pop_size}_{date_id}_{generation}',
+        'screen_dimensions': screen_dimensions,
         'generation': generation,
         'cells': {
-            'list': population.cells_list,
-            'color': colors.green,
+            'list': population,
+            'tree': sf.create_cell_tree(
+                    population=population,
+                    property='position'
+                    ),
+            'color': colors.green
         },
         'energy': {
-            'list': energy_init,
+            'list': energy_list,
+            'tree': sf.create_tree(energy_list),
             'color': colors.blue
         },
         'block': {
-            'list': block_init,
+            'list': block_list,
+            'tree': sf.create_tree(block_list),
             'color': colors.yellow,
         },
         'signal': {
             'list': [],
+            'tree': None,
             'color': colors.orange,
         },
         'waste': {
             'list': [],
+            'tree': None,
             'color': colors.red,
         },
         'gene': {
             'list': [],
+            'tree': None,
             'color': colors.purple,
         },
     }
@@ -109,11 +120,19 @@ def run_simulation(args):
                 running = False
             elif len(environment['cells']['list']) == 0 and args.auto_reset:
                 generation += 1
-                population = sf.init_population(size=args.population_size, screen_dimensions=environment['size'], generation=generation)
-                environment['cells']['list'] = population.cells_list
+                population = sf.init_population(
+                    size=args.population_size,
+                    screen_dimensions=environment['size'],
+                    generation=generation
+                    )
+                environment['cells']['list'] = population
+                environment['cells']['tree'] = sf.create_cell_tree(
+                                                    population=population,
+                                                    property='position'
+                                                    ),
 
         # Perform cell behaviors
-        environment = sf.simulation_interactions(environment=environment)
+        environment = sf.environment_interactions(environment=environment)
 
         # Clear the screen
         screen.fill(colors.black)

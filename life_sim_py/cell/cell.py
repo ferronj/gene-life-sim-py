@@ -33,7 +33,7 @@ class Cell():
             'position': position,
             'position_vector': position_vector,
             'mass': 10,
-            'potential': 0,
+            'potential': 100,
             'entropy': 0,
             'genome_length': genome_length,
             'gene': []
@@ -70,7 +70,7 @@ class Cell():
 
         return json_dict
 
-#  --------------------------------------------------------    
+#  --------------------------------------------------------
 
 
 def cell_id_match(cell_id, environment):
@@ -93,14 +93,14 @@ def get_sensor_value(
     
     if input_id == 'POSITION_X':
         # -1 to 1 distance from center
-        x = environment['size'][0] / 2
+        x = environment['screen_dimensions'][0] / 2
         cell_x = cell.state['position'][0]
 
         return (cell_x - x) / x
     
     elif input_id == 'POSITION_Y':
         # -1 to 1 distance from center
-        y = environment['size'][1] / 2
+        y = environment['screen_dimensions'][1] / 2
         cell_y = cell.state['position'][1]
 
         return (cell_y - y) / y
@@ -110,7 +110,7 @@ def get_sensor_value(
         x = cell.state['position'][0]
         y = cell.state['position'][1]
 
-        return util.v_heading(x, y)
+        return util.vector_to_heading(x, y)
     
     elif input_id == 'MASS':
         return cell.state['mass']
@@ -128,90 +128,114 @@ def get_sensor_value(
         return cell.state['genome_length']
     
     elif input_id == 'DETECT_ENERGY':
+        
         detect = 0
-        for chem in environment['energy']['list']:
-            
-            vector = util.get_vector(
-                position_1=cell.state['position'],
-                position_2=chem)
-            
-            d = util.get_magnitude(vector=vector)
-            if d <= CELL_DETECTION_RADIUS:
-                detect += 1
+        detect_str = input_id.split('_')[1].lower()
+        tree = environment[detect_str]['tree']
+        
+        if tree is not None:
+            detect += len(tree.query_ball_point(
+                cell.state['position'],
+                r=CELL_DETECTION_RADIUS
+                ))
+
         return detect
     
     elif input_id == 'DETECT_BLOCK':
+        
         detect = 0
-        for chem in environment['block']['list']:
-            
-            vector = util.get_vector(
-                position_1=cell.state['position'],
-                position_2=chem)
-            
-            d = util.get_magnitude(vector=vector)
-            if d <= CELL_DETECTION_RADIUS:
-                detect += 1
+        detect_str = input_id.split('_')[1].lower()
+        tree = environment[detect_str]['tree']
+        
+        if tree is not None:
+            detect += len(tree.query_ball_point(
+                cell.state['position'],
+                r=CELL_DETECTION_RADIUS
+                ))
         return detect
     
     elif input_id == 'DETECT_SIGNAL':
+        
         detect = 0
-        for chem in environment['signal']['list']:
+        detect_str = input_id.split('_')[1].lower()
+        tree = environment[detect_str]['tree']
+        
+        if tree is not None:
+            detect += len(tree.query_ball_point(
+                cell.state['position'],
+                r=CELL_DETECTION_RADIUS
+                ))
             
-            vector = util.get_vector(
-                position_1=cell.state['position'],
-                position_2=chem)
-            
-            d = util.get_magnitude(vector=vector)
-            if d <= CELL_DETECTION_RADIUS:
-                detect += 1
         return detect
     
     elif input_id == 'DETECT_WASTE':
+        
         detect = 0
-        for chem in environment['waste']['list']:
+        detect_str = input_id.split('_')[1].lower()
+        tree = environment[detect_str]['tree']
+        
+        if tree is not None:
+            detect += len(tree.query_ball_point(
+                cell.state['position'],
+                r=CELL_DETECTION_RADIUS
+                ))
             
-            vector = util.get_vector(
-                position_1=cell.state['position'],
-                position_2=chem)
-            
-            d = util.get_magnitude(vector=vector)
-            if d <= CELL_DETECTION_RADIUS:
-                detect += 1
         return detect
     
     elif input_id == 'DETECT_GENE':
+        
         detect = 0
-        for chem in environment['gene']['list']:
+        detect_str = input_id.split('_')[1].lower()
+        tree = environment[detect_str]['tree']
+        
+        if tree is not None:
+            detect += len(tree.query_ball_point(
+                cell.state['position'],
+                r=CELL_DETECTION_RADIUS
+                ))
             
-            vector = util.get_vector(
-                position_1=cell.state['position'],
-                position_2=chem)
-            
-            d = util.get_magnitude(vector=vector)
-            if d <= CELL_DETECTION_RADIUS:
-                detect += 1
         return detect
     
-    elif input_id == 'DETECT_CELL':
+    elif input_id == 'DETECT_CELLS':
+        
         detect = 0
-        for cell in environment['cells']['list']:
+        detect_str = input_id.split('_')[1].lower()
+        tree = environment[detect_str]['tree']
+        
+        if tree is not None:
+            detect += len(tree.query_ball_point(
+                cell.state['position'],
+                r=CELL_DETECTION_RADIUS
+                ))
             
-            vector = util.get_vector(
-                position_1=cell.state['position'],
-                position_2=cell.state['position']
-                )
-            
-            d = util.get_magnitude(vector=vector)
-            if d <= CELL_DETECTION_RADIUS:
-                detect += 1
-        return detect - 1  # don't count the cell we're working with
+        return detect  # don't count the cell we're working with
     
     elif input_id == 'DETECT_PHOTO':
         # no plan for this yet
         sensor_value = 0
         return sensor_value
 
-    
+
+def consume_resource(
+        resource_value: float,
+        action_value: float
+        ) -> tuple[float]:
+
+    if resource_value > 0:
+        resource_value = resource_value - action_value
+
+        if resource_value < 0:
+            action_value = action_value - np.abs(resource_value)
+            resource_value = 0
+
+    return resource_value, action_value
+
+
+def identify_target_object():
+    #  function to find an environment object to act on
+    pass
+
+
 def apply_action_output(
         output_id: str,
         action_value: float,
@@ -226,16 +250,46 @@ def apply_action_output(
 
     if output_id == 'MOVE':
         
+        resource_str = 'potential'
+
+        cell.state[resource_str], action_value = consume_resource(
+            resource_value=cell.state[resource_str],
+            action_value=action_value
+            )
+
         move_vector = cell.state['position_vector'] * action_value
-        cell.state['position'] + move_vector
+        cell.state['position'] = cell.state['position'] + move_vector
         
         return environment
     
     elif output_id == 'TURN':
+        
+        resource_str = 'potential'
+
+        cell.state[resource_str], action_value = consume_resource(
+            resource_value=cell.state[resource_str],
+            action_value=action_value
+            )
+
+        heading = util.vector_to_heading(
+            x=cell.state['position_vector'][0],
+            y=cell.state['position_vector'][1]
+            )
+        new_heading = heading * action_value
+        cell.state['position_vector'] = util.heading_to_vector(new_heading)
 
         return environment
     
     elif output_id == 'GROW':
+        
+        resource_str = 'potential'
+
+        cell.state[resource_str], action_value = consume_resource(
+            resource_value=cell.state[resource_str],
+            action_value=action_value
+            )
+            
+        cell.state['mass'] = cell.state['mass'] + action_value
 
         return environment
     
@@ -260,7 +314,16 @@ def apply_action_output(
         return environment
     
     elif output_id == 'TRANSPORT_IN_ENERGY':
-
+        
+        detect_str = output_id.split('_')[1].lower()
+        tree = environment[detect_str]['tree']
+        
+        if tree is not None:
+            detect = tree.query_ball_point(
+                cell.state['position'],
+                r=CELL_DETECTION_RADIUS
+                )
+            
         return environment
     
     elif output_id == 'TRANSPORT_IN_BLOCK':

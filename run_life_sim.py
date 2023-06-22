@@ -23,7 +23,7 @@ parser.add_argument(
     "--population_size",
     type=int,
     help="specify the number of cells to produce in each population",
-    default=100,
+    default=200,
 )
 
 parser.add_argument(
