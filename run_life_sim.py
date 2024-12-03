@@ -1,7 +1,7 @@
 import pygame
 import argparse
 
-from life_sim_py.simulation.run_simulation import run_simulation
+from life_sim_py.life_sim import run_simulation
 
 parser = argparse.ArgumentParser()
 

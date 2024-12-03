@@ -2,18 +2,22 @@ import numpy as np
 import random
 import pygame
 
+from datetime import date
+
 from scipy.spatial import KDTree
+
+import life_sim_py.utils.colors as colors
 
 from life_sim_py.config.config_sim import (
     CHEM_DRAW_RADIUS
 )
 
-from life_sim_py.cell.sensors_actions import (
+from life_sim_py.cells.sensors_actions import (
     SENSORS,
     ACTIONS
 )
 
-from life_sim_py.cell.cell import (
+from life_sim_py.cells.cell import (
     Cell,
     get_sensor_value,
     apply_action_output
@@ -22,9 +26,7 @@ from life_sim_py.cell.cell import (
 
 #  KD Tree functions
 
-def create_tree(
-        object_list: list[tuple]
-) -> KDTree:
+def create_tree(object_list: list[tuple]) -> KDTree:
 
     object_tree = KDTree(object_list)
 
@@ -44,7 +46,7 @@ def create_cell_tree(population: list[Cell], property: str) -> KDTree:
 def init_environment_object_list(
     count: int,
     screen_dimensions: tuple
-) -> list[np.array]:
+) -> list:
 
     object_list = []
     for _ in range(count):
@@ -58,7 +60,8 @@ def init_environment_object_list(
 def init_population(
     pop_size: int,
     screen_dimensions: tuple,
-    generation: int = 0  # generation will feed to a population
+    generation: int=0,  # generation will feed to a population
+    genome_length: int=None
 ) -> list[Cell]:
 
     population = []
@@ -70,20 +73,89 @@ def init_population(
         x_dir = random.uniform(-1, 1)
         y_dir = random.uniform(-1, 1)
 
-        cell = Cell(
-            id=f'{i}_{generation}',
-            position=np.array([x, y]),
-            position_vector=np.array([x_dir, y_dir])
-        )
+        if genome_length is None:
+            cell = Cell(
+                id=f'{i}_{generation}',
+                position=np.array([x, y]),
+                position_vector=np.array([x_dir, y_dir])
+            )
+        else:
+            cell = Cell(
+                id=f'{i}_{generation}',
+                position=np.array([x, y]),
+                position_vector=np.array([x_dir, y_dir]),
+                genome_length=genome_length
+            )
 
         population.append(cell)
 
     return population
 
 
-def init_environment():
+def init_environment(
+        pop_size: int,
+        date_id: date,
+        generation: int,
+        screen_dimensions: tuple
+        ):
     #  take this functionality out of run-simulation
-    pass
+
+    # create environment objects
+    energy_list = init_environment_object_list(
+        count=1000,
+        screen_dimensions=screen_dimensions
+        )
+    
+    block_list = init_environment_object_list(
+        count=1000,
+        screen_dimensions=screen_dimensions
+        )
+    
+    population = init_population(
+        pop_size=pop_size,
+        screen_dimensions=screen_dimensions,
+        generation=generation
+        )
+
+    environment = {
+        'id': f'{pop_size}_{date_id}_{generation}',
+        'screen_dimensions': screen_dimensions,
+        'generation': generation,
+        'cells': {
+            'list': population,
+            'tree': create_cell_tree(
+                    population=population,
+                    property='position'
+                    ),
+            'color': colors.green
+        },
+        'energy': {
+            'list': energy_list,
+            'tree': create_tree(energy_list),
+            'color': colors.blue
+        },
+        'block': {
+            'list': block_list,
+            'tree': create_tree(block_list),
+            'color': colors.yellow,
+        },
+        'signal': {
+            'list': [],
+            'tree': None,
+            'color': colors.orange,
+        },
+        'waste': {
+            'list': [],
+            'tree': None,
+            'color': colors.red,
+        },
+        'gene': {
+            'list': [],
+            'tree': None,
+            'color': colors.purple,
+        }
+    }
+    return environment
 
 
 def update_environment():
@@ -97,7 +169,7 @@ def environment_interactions(environment: dict) -> dict:
 
     for cell in environment['cells']['list']:
         # initialize the input array to the cell's network
-        sensor_input = np.zeros(len(ACTIONS), dtype=float)
+        sensor_input = np.zeros(len(SENSORS), dtype=float)
         
         # calculate sensor inputs from cell & environment
         for node in cell.network.nodes:
@@ -105,7 +177,7 @@ def environment_interactions(environment: dict) -> dict:
                 input_index = SENSORS.index(node['input_id'])
                 sensor_input[input_index] += get_sensor_value(
                     input_id=node['input_id'],
-                    cell_id=cell.id,
+                    cell=cell,
                     environment=environment
                     )
         
@@ -119,7 +191,7 @@ def environment_interactions(environment: dict) -> dict:
                 environment = apply_action_output(
                     output_id=node['output_id'],
                     action_value=network_output[output_index],
-                    cell_id=cell.id,
+                    cell=cell,
                     environment=environment
                     )
 
@@ -142,7 +214,7 @@ def cell_reproduce():
 
 
 def draw_chems(
-    chem_list: list[np.array],
+    chem_list: list,
     surface: pygame.Surface,
     color: tuple
 ) -> None:
@@ -157,7 +229,7 @@ def draw_chems(
 
 
 def draw_cells(
-    cells_list: list[np.array],
+    cells_list: list,
     surface: pygame.Surface,
     color: tuple
 ) -> None:

@@ -3,9 +3,8 @@ import pprint
 
 from datetime import date
 
-import life_sim_py.simulation.colors as colors
-import life_sim_py.simulation.simulation_functions as sf
-import life_sim_py.utils.util_functions as util
+import life_sim_py.utils.colors as colors
+import life_sim_py.sim_functions as sf
 
 
 def run_simulation(args):
@@ -22,17 +21,6 @@ def run_simulation(args):
     # Set the background color to black
     screen.fill(colors.black)
 
-    # create environment objects
-    energy_list = sf.init_environment_object_list(
-        count=1000,
-        screen_dimensions=screen_dimensions
-        )
-    
-    block_list = sf.init_environment_object_list(
-        count=1000,
-        screen_dimensions=screen_dimensions
-        )
-
     # Create initial population - this might get more complex as we add generations...
     # TODO: consider moving this to a separate function, population_functions?
     date_id = date.today()
@@ -40,10 +28,10 @@ def run_simulation(args):
     pop_size = args.population_size
 
     population = sf.init_population(
-        pop_size=pop_size,
-        screen_dimensions=screen_dimensions,
-        generation=generation
-        )
+                    pop_size=pop_size,
+                    screen_dimensions=screen_dimensions,
+                    generation=generation
+                    )
 
     print(args)
     if args.print_config:
@@ -51,44 +39,11 @@ def run_simulation(args):
         pp.pprint(population.reprJSON())
 
     #  create environment dictionary
-    environment = {
-        'id': f'{pop_size}_{date_id}_{generation}',
-        'screen_dimensions': screen_dimensions,
-        'generation': generation,
-        'cells': {
-            'list': population,
-            'tree': sf.create_cell_tree(
-                    population=population,
-                    property='position'
-                    ),
-            'color': colors.green
-        },
-        'energy': {
-            'list': energy_list,
-            'tree': sf.create_tree(energy_list),
-            'color': colors.blue
-        },
-        'block': {
-            'list': block_list,
-            'tree': sf.create_tree(block_list),
-            'color': colors.yellow,
-        },
-        'signal': {
-            'list': [],
-            'tree': None,
-            'color': colors.orange,
-        },
-        'waste': {
-            'list': [],
-            'tree': None,
-            'color': colors.red,
-        },
-        'gene': {
-            'list': [],
-            'tree': None,
-            'color': colors.purple,
-        },
-    }
+    environment = sf.init_environment(
+        pop_size=pop_size,
+        date_id=date_id,
+        generation=generation,
+        screen_dimensions=screen_dimensions)
 
     for key in environment:
         if isinstance(environment[key], dict):
@@ -121,8 +76,8 @@ def run_simulation(args):
             elif len(environment['cells']['list']) == 0 and args.auto_reset:
                 generation += 1
                 population = sf.init_population(
-                    size=args.population_size,
-                    screen_dimensions=environment['size'],
+                    pop_size=pop_size,
+                    screen_dimensions=screen_dimensions,
                     generation=generation
                     )
                 environment['cells']['list'] = population
